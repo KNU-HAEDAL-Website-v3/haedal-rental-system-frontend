@@ -1,0 +1,45 @@
+sequenceDiagram
+    autonumber
+    actor M as 활동회원
+    participant FE as 웹 클라이언트
+    participant CAM as 카메라
+    participant BE as 서버
+    participant DB as 데이터베이스
+
+    Note over M,DB: 도서 반납 (FR-RTN-001 ~ FR-RTN-002)
+
+    M->>FE: 반납 화면 진입
+    FE->>CAM: 카메라 사용 요청
+    CAM-->>FE: 사용 승인
+    M->>CAM: 도서 라벨 제시
+    CAM-->>FE: 라벨코드 전달
+
+    FE->>BE: 반납 요청
+    activate BE
+    BE->>DB: 라벨코드로 대여 중인 이력 조회
+    DB-->>BE: 대여이력 반환
+
+    alt 대여 중인 이력 존재
+        BE->>BE: 반납일 기록 · 연체 일수 계산
+        BE->>DB: 대여이력에 반납일 저장
+        BE->>DB: 품목 상태를 대여가능으로 변경
+        DB-->>BE: 저장 완료
+
+        alt 연체 반납
+            BE-->>FE: 반납 완료 · 연체 일수 · 보관 위치
+            FE-->>M: 반납 완료와 연체 일수 표시
+        else 정상 반납
+            BE-->>FE: 반납 완료 · 보관 위치
+            FE-->>M: 반납 완료와 보관 위치 표시
+        end
+
+    else 대여 기록 없음
+        BE-->>FE: 거부 · 대여 중이 아님
+        FE-->>M: 반납 대상이 아님을 안내
+    else 중복 반납 요청 (FR-RTN 예외)
+        BE-->>FE: 이미 반납 처리됨
+        FE-->>M: 처리 완료된 요청임을 안내
+    end
+    deactivate BE
+
+    M->>M: 도서를 책꽂이에 반납

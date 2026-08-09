@@ -1,0 +1,35 @@
+flowchart TD
+    classDef startEnd fill:#d4edda,stroke:#28a745,stroke-width:2px
+    classDef process fill:#e8f0fe,stroke:#4a6fa5,stroke-width:1px
+    classDef decision fill:#fff3cd,stroke:#e0a800,stroke-width:1px
+    classDef reject fill:#f8d7da,stroke:#dc3545,stroke-width:1px
+
+    S([반납 시작]):::startEnd --> SCAN[라벨 스캔]:::process
+    SCAN --> RECOG{라벨을 인식했는가}:::decision
+
+    RECOG -->|아니오| SEARCH[내 대여 목록에서 선택]:::process
+    SEARCH --> FIND
+    RECOG -->|예| FIND[대여 중인 이력 조회]:::process
+
+    FIND --> EXIST{대여 중인<br/>이력이 있는가}:::decision
+
+    EXIST -->|아니오| DUP{이미 반납<br/>처리되었는가}:::decision
+    DUP -->|예| R1[처리 완료된 요청임을 안내]:::reject
+    DUP -->|아니오| R2[반납 대상이 아님을 안내]:::reject
+    R1 --> E2([반납 중단]):::startEnd
+    R2 --> E2
+
+    EXIST -->|예| CALC[반납일 기록<br/>연체 일수 계산]:::process
+    CALC --> SAVE[대여이력에 반납일 저장<br/>품목 상태를 대여가능으로 변경]:::process
+    SAVE --> SAVED{저장에 성공했는가}:::decision
+
+    SAVED -->|아니오| R3[처리 실패 안내<br/>대여 상태 유지]:::reject
+    R3 --> E2
+
+    SAVED -->|예| LATE{반납예정일을<br/>넘겼는가}:::decision
+    LATE -->|예| MSG1[반납 완료·연체 일수·<br/>보관 위치 표시]:::process
+    LATE -->|아니오| MSG2[반납 완료·보관 위치 표시]:::process
+
+    MSG1 --> SHELF[도서를 책꽂이에 반납]:::process
+    MSG2 --> SHELF
+    SHELF --> E1([반납 완료]):::startEnd

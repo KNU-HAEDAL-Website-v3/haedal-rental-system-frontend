@@ -1,0 +1,75 @@
+flowchart LR
+    classDef actor fill:#ffffff,stroke:#333333,stroke-width:2px,font-weight:bold
+    classDef ext fill:#f0f0f0,stroke:#777777,stroke-width:1px,stroke-dasharray:3 3
+    classDef ucAuth fill:#e3f2fd,stroke:#1976d2,stroke-width:1px
+    classDef ucBook fill:#e8f5e9,stroke:#388e3c,stroke-width:1px
+    classDef ucSearch fill:#fff8e1,stroke:#f9a825,stroke-width:1px
+    classDef ucRent fill:#fce4ec,stroke:#c2185b,stroke-width:1px
+    classDef ucAdmin fill:#ede7f6,stroke:#5e35b1,stroke-width:1px
+
+    GUEST["미승인회원"]:::actor
+    MEMBER["활동회원"]:::actor
+    ADMIN["운영진"]:::actor
+
+    subgraph SYS["동아리 도서 관리 시스템"]
+        U01(["로그인"]):::ucAuth
+        U02(["추가 정보 입력"]):::ucAuth
+        U03(["가입 승인·반려"]):::ucAuth
+
+        U04(["도서 등록"]):::ucBook
+        U05(["도서 정보 수정"]):::ucBook
+        U06(["라벨코드 발급"]):::ucBook
+
+        U07(["도서 목록 조회"]):::ucSearch
+        U08(["도서 검색"]):::ucSearch
+        U09(["도서 상세 조회"]):::ucSearch
+
+        U10(["도서 대여"]):::ucRent
+        U11(["도서 반납"]):::ucRent
+        U12(["대여 연장"]):::ucRent
+        U13(["라벨 스캔"]):::ucRent
+        U14(["대여 자격 확인"]):::ucRent
+
+        U15(["개인 대여 이력 조회"]):::ucAdmin
+        U16(["전체 대여 현황 조회"]):::ucAdmin
+        U17(["연체 목록 조회"]):::ucAdmin
+        U18(["강제 반납 처리"]):::ucAdmin
+        U19(["분실·파손 등록"]):::ucAdmin
+        U20(["대여 정책 설정"]):::ucAdmin
+        U21(["반납 예정·연체 알림"]):::ucAdmin
+    end
+
+    GOOGLE["Google 계정<br/>외부 시스템"]:::ext
+    NOTIFY["알림 발송<br/>외부 시스템"]:::ext
+
+    GUEST --- U01
+    GUEST --- U02
+    GUEST --- U07
+    GUEST --- U08
+    GUEST --- U09
+
+    MEMBER --- U07
+    MEMBER --- U08
+    MEMBER --- U09
+    MEMBER --- U10
+    MEMBER --- U11
+    MEMBER --- U12
+    MEMBER --- U15
+
+    ADMIN --- U03
+    ADMIN --- U04
+    ADMIN --- U05
+    ADMIN --- U06
+    ADMIN --- U16
+    ADMIN --- U17
+    ADMIN --- U18
+    ADMIN --- U19
+    ADMIN --- U20
+
+    U10 -.->|include| U13
+    U10 -.->|include| U14
+    U11 -.->|include| U13
+    U12 -.->|include| U14
+
+    U01 -.->|use| GOOGLE
+    U21 -.->|use| NOTIFY

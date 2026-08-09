@@ -1,0 +1,50 @@
+flowchart TD
+    classDef startEnd fill:#d4edda,stroke:#28a745,stroke-width:2px
+    classDef process fill:#e8f0fe,stroke:#4a6fa5,stroke-width:1px
+    classDef decision fill:#fff3cd,stroke:#e0a800,stroke-width:1px
+    classDef reject fill:#f8d7da,stroke:#dc3545,stroke-width:1px
+
+    S([대여 시작]):::startEnd --> LOGIN{로그인 상태인가}:::decision
+
+    LOGIN -->|아니오| R1[로그인 요청 안내]:::reject
+    R1 --> E2([대여 중단]):::startEnd
+
+    LOGIN -->|예| APPROVED{활동회원인가}:::decision
+    APPROVED -->|아니오| R2[승인 절차 안내<br/>조회는 계속 허용]:::reject
+    R2 --> E2
+
+    APPROVED -->|예| SCAN[라벨 스캔]:::process
+    SCAN --> RECOG{라벨을 인식했는가}:::decision
+
+    RECOG -->|아니오| SEARCH[제목·저자로 검색]:::process
+    SEARCH --> FOUND{도서를 찾았는가}:::decision
+    FOUND -->|아니오| R3[등록되지 않은 도서 안내<br/>운영진 등록 요청 유도]:::reject
+    R3 --> E2
+    FOUND -->|예| SELECT[대여할 실물 선택]:::process
+    SELECT --> CONFIRM
+
+    RECOG -->|예| CONFIRM[도서 정보 표시]:::process
+    CONFIRM --> USEROK{이용자가 확정했는가}:::decision
+    USEROK -->|아니오| E2
+
+    USEROK -->|예| C1{해당 실물이<br/>대여 가능한가}:::decision
+    C1 -->|아니오| R4[대여 중 안내<br/>반납예정일 표시]:::reject
+    R4 --> E2
+
+    C1 -->|예| C2{연체 도서가<br/>없는가}:::decision
+    C2 -->|아니오| R5[연체 도서 목록 표시<br/>선반납 안내]:::reject
+    R5 --> E2
+
+    C2 -->|예| C3{대여 권수가<br/>한도 이내인가}:::decision
+    C3 -->|아니오| R6[현재 권수와<br/>허용 권수 표시]:::reject
+    R6 --> E2
+
+    C3 -->|예| CALC[반납예정일 계산<br/>대여일 + 14일]:::process
+    CALC --> SAVE[대여이력 생성<br/>품목 상태를 대여중으로 변경]:::process
+    SAVE --> SAVED{저장에 성공했는가}:::decision
+
+    SAVED -->|아니오| R7[처리 실패 안내<br/>도서 상태 원복]:::reject
+    R7 --> E2
+
+    SAVED -->|예| DONE[대여 완료와<br/>반납예정일 표시]:::process
+    DONE --> E1([대여 완료]):::startEnd
