@@ -1,5 +1,5 @@
-@docs/creating-rules/format.md
-@docs/creating-rules/contents.md
+@docs/document-writing-rules/format.md
+@docs/document-writing-rules/contents.md
 @docs/project-rules/agent-guidelines.md
 
 # CLAUDE.md
