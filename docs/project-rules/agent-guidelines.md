@@ -75,7 +75,7 @@
 
 ## 라. 다이어그램
 
-원본은 `docs/planning/diagrams/*.mmd`로 관리합니다. 원본을 고치면 PNG와 SVG를 다시 생성합니다. 생성 방법은 `docs/planning/diagrams.md` 1장 라 항목에 있습니다.
+원본은 PNG와 SVG로, 다이어그램 변경 시 다시 생성 후 이미지로 저장합니다. 생성 방법은 `docs/planning/diagrams.md` 1장 라 항목에 있습니다.
 
 ---
 

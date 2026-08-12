@@ -28,20 +28,29 @@
 
 ## 다. 파일 구성
 
-원본은 Mermaid 형식으로 관리하고 이미지를 함께 보관한다. 원본을 고치면 이미지를 다시 생성한다.
+다이어그램은 이미지로 관리한다. 다이어그램이 수정되면 이미지를 다시 생성한다.
 
 | 구분 | 경로 | 용도 |
 | --- | --- | --- |
-| 원본 | docs/planning/diagrams/*.mmd | 수정 대상 |
 | 이미지 | docs/planning/diagrams/*.png | 문서 첨부·공유 |
 | 이미지 | docs/planning/diagrams/*.svg | 확대 열람 |
 
-## 라. 이미지 재생성 방법
+## 라. 이미지 생성 방법
+
+다이어그램을 고칠 때는 Mermaid 코드를 새로 작성해 이미지를 만든다. 코드 파일은 저장소에 두지 않는다. 생성한 PNG와 SVG만 남긴다.
 
 ### 1) 기본 명령
 
+작업 폴더에 `<파일명>.mmd`를 임시로 만든 뒤 실행한다. 이미지를 얻고 나면 임시 파일은 지운다.
+
 ```bash
 npx -y @mermaid-js/mermaid-cli -i <파일명>.mmd -o <파일명>.png -s 3 -b white
+```
+
+SVG는 출력 확장자만 바꿔 한 번 더 실행한다.
+
+```bash
+npx -y @mermaid-js/mermaid-cli -i <파일명>.mmd -o <파일명>.svg -b white
 ```
 
 ### 2) 브라우저를 찾지 못하는 경우
