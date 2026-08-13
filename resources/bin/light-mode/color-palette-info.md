@@ -1,3 +1,9 @@
+# Light-Mode Color Palette
+
+색조는 따뜻한 노랑(`#FFF3B0`)으로 잡았다. 낮의 포근한 햇살을 배경으로 두기 위해 선택했다.
+
+---
+
 ## 1. Surface & Background
 
 - color.surface.layer-0(base, 웹사이트 최하단 배경) : #FFF3B0
