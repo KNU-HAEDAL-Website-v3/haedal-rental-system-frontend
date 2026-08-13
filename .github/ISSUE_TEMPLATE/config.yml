@@ -1,0 +1,11 @@
+# 어떤 템플릿에도 맞지 않는 경우 빈 이슈로 올릴 수 있게 허용합니다.
+# 템플릿을 고르기 어려워서 아예 이슈를 안 쓰는 것보다 낫습니다.
+blank_issues_enabled: true
+
+contact_links:
+  - name: 📚 요구사항 정의서
+    url: https://github.com/KNU-HAEDAL-Website-v3/haedal-rental-system-frontend/blob/main/docs/planning/requirements-definition.md
+    about: 기능 범위와 요구사항 ID(FR-XXX-000)를 먼저 확인해주세요
+  - name: 🌿 브랜치 · 커밋 규칙
+    url: https://github.com/KNU-HAEDAL-Website-v3/haedal-rental-system-frontend/blob/main/docs/project-rules/branch-strategy.md
+    about: 브랜치 이름과 커밋 메시지 형식을 확인해주세요
