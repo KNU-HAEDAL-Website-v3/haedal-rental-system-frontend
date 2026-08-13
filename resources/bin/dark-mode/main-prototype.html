@@ -1,0 +1,1680 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>해달 도서 — 메인</title>
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: 'GmarketSans';
+      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansBold.woff') format('woff');
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    /* ─────────────────────────────────────────────
+   TOKENS — resources/bin/dark-mode/color-palette-info.md
+   달 모드. 토큰 이름은 라이트와 같고, 표면과 텍스트 램프만 뒤집는다.
+   brand · hover · active · status 는 라이트 값을 그대로 쓴다.
+   ───────────────────────────────────────────── */
+    :root {
+      /* 네이티브 입력과 스크롤바까지 어두워진다 */
+      color-scheme: dark;
+
+      --base: #0E1426;
+      /* surface.layer-0 */
+      --card: #182034;
+      /* surface.layer-1 */
+      --sub: #222B44;
+      /* surface.layer-2 */
+      --brand: #FFE500;
+      /* surface.brand   */
+      --muted: #1B2133;
+      /* surface.disabled */
+
+      --line: #333D5B;
+      /* border.default */
+      --line-soft: #262E47;
+      /* border.subtle  */
+      --line-hard: #4B577A;
+      /* border.strong  */
+
+      --hover: #FFD166;
+      --active: #FEE140;
+
+      --ink: #F5F1E3;
+      /* text.primary   */
+      --ink-2: #B6BED2;
+      /* text.second    */
+      --ink-3: #8892A8;
+      /* text.tertiary  */
+      --ink-off: #5A6480;
+      /* text.disabled  */
+
+      /* status.error / status.info — 팔레트 5장에 정식 반영된 값.
+     어두운 표면 위에서도 그대로 읽혀 라이트와 같은 값을 유지한다. */
+      --coral: #E8564E;
+      --sky: #8FD3EC;
+
+      /* glass system — 어두운 유리. 빛이 표면 뒤에서 오므로 유리가 스스로 밝다 */
+      --glass: rgba(24, 32, 52, .66);
+      --glass-strong: rgba(24, 32, 52, .82);
+      --glass-quiet: rgba(46, 58, 92, .45);
+      --edge: rgba(198, 212, 255, .16);
+      /* lit top edge */
+      --edge-dim: rgba(200, 214, 255, .10);
+      /* 다크에서 구분선은 가라앉지 않고 떠오른다 */
+      --blur: blur(24px) saturate(180%);
+      /* 위는 빛, 아래는 그림자 — 유리가 평평한 판으로 보이지 않게 한다 */
+      --bevel: inset 0 1px 0 rgba(255, 255, 255, .10), inset 0 -1px 0 rgba(0, 0, 0, .30);
+
+      /* 라이트에서는 --ink 하나가 본문 색·스티커 테두리·하드 섀도를 겸했다.
+     어두운 배경에서는 셋이 갈라져 각자 토큰을 갖는다. */
+      --on-brand: #111827;
+      /* 노랑 표면 위의 글자·아이콘·테두리 */
+      --stick-edge: rgba(245, 241, 227, .82);
+      /* 어두운 표면 위 스티커 테두리 — 달빛이 선 자리 */
+      --stick-shadow: #04070E;
+      /* 하드 오프셋 — 배경보다 어두워 빛이 닿지 않은 구멍으로 읽힌다 */
+
+      --sticker: 3px 3px 0 var(--stick-shadow);
+      /* hero surfaces only */
+
+      --sh-sm: 0 1px 2px rgba(0, 0, 0, .40), 0 7px 18px rgba(0, 0, 0, .35);
+      --sh-md: 0 2px 8px rgba(0, 0, 0, .42), 0 18px 42px rgba(0, 0, 0, .45);
+      --sh-lg: 0 4px 14px rgba(0, 0, 0, .45), 0 34px 74px rgba(0, 0, 0, .55);
+      --sh-brand: 0 8px 24px rgba(255, 209, 102, .30), 0 2px 6px rgba(0, 0, 0, .45);
+
+      --display: 'GmarketSans', 'Pretendard', system-ui, sans-serif;
+      --body: 'Pretendard', -apple-system, 'Segoe UI', sans-serif;
+      --mono: 'IBM Plex Mono', ui-monospace, 'Consolas', monospace;
+
+      --r-slab: 28px;
+      --r-card: 20px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%
+    }
+
+    body {
+      background: var(--base);
+      color: var(--ink);
+      font-family: var(--body);
+      font-size: 15px;
+      line-height: 1.6;
+      letter-spacing: -.011em;
+      min-height: 100%;
+    }
+
+    /* 해달의 밤 — 해(coral) · 달(yellow) · 물결(sky blue)이 어둠에 잠긴다.
+   유리가 굴절할 빛만 남기고 밝기를 낮췄다. 블롭의 좌표와 크기는 라이트와 같아서
+   두 모드를 나란히 두면 같은 자리에서 빛이 켜지고 꺼진다. */
+    body {
+      position: relative
+    }
+
+    .sky {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background:
+        radial-gradient(880px 700px at 4% 40px, rgba(255, 229, 0, .13), transparent 64%),
+        radial-gradient(700px 560px at 104% -40px, rgba(143, 211, 236, .13), transparent 64%),
+        radial-gradient(700px 560px at 62% 360px, rgba(150, 170, 230, .10), transparent 62%),
+        radial-gradient(820px 700px at 96% 860px, rgba(255, 209, 102, .11), transparent 64%),
+        radial-gradient(660px 560px at -10% 1320px, rgba(232, 86, 78, .12), transparent 66%),
+        radial-gradient(900px 740px at 76% 1780px, rgba(255, 229, 0, .10), transparent 64%),
+        radial-gradient(720px 580px at 2% 2040px, rgba(143, 211, 236, .12), transparent 66%),
+        var(--base);
+    }
+
+    img {
+      max-width: 100%;
+      display: block
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none
+    }
+
+    button {
+      font: inherit;
+      color: inherit;
+      cursor: pointer;
+      border: 0;
+      background: none
+    }
+
+    input {
+      font: inherit;
+      color: inherit
+    }
+
+    ul {
+      list-style: none
+    }
+
+    .mono {
+      font-family: var(--mono);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0
+    }
+
+    .wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 34px
+    }
+
+    /* 어두운 바다 위에서는 border.focus(#FFE500)가 그대로 보인다 — 정식 토큰을 쓴다 */
+    :focus-visible {
+      outline: 2.5px solid var(--brand);
+      outline-offset: 3px;
+      border-radius: 10px
+    }
+
+    /* reusable glass surface */
+    /* the sheen gradient is what separates glass from flat cream: brightest at the
+   lit top-left corner, thinning toward bottom-right so the sky shows through. */
+    .glass {
+      background: linear-gradient(142deg,
+          rgba(86, 102, 148, .42) 0%,
+          rgba(36, 46, 74, .40) 46%,
+          rgba(20, 28, 48, .34) 100%);
+      -webkit-backdrop-filter: var(--blur);
+      backdrop-filter: var(--blur);
+      border: 1px solid var(--edge);
+      box-shadow: var(--sh-md), var(--bevel);
+    }
+
+    /* solid sticker surface — reserved for the hero.
+   the two languages split by job: you ACT on the hero, so it stays physical,
+   opaque and pinned to the page; you BROWSE everything below, so those
+   surfaces stay glass and let the sky through. defined after .glass so a
+   .stick element wins if both classes are ever present. */
+    .stick {
+      background: var(--card);
+      border: 2.5px solid var(--stick-edge);
+      border-radius: 22px;
+      box-shadow: 5px 5px 0 var(--stick-shadow);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+
+    /* ─── header ─────────────────────────────── */
+    .top {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: rgba(14, 20, 38, .66);
+      -webkit-backdrop-filter: blur(20px) saturate(170%);
+      backdrop-filter: blur(20px) saturate(170%);
+      border-bottom: 1px solid var(--edge-dim);
+    }
+
+    .top .wrap {
+      display: flex;
+      align-items: center;
+      gap: 26px;
+      height: 74px
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      flex: 0 0 auto
+    }
+
+    .brand img {
+      height: 38px;
+      width: auto
+    }
+
+    .nav {
+      display: flex;
+      gap: 2px;
+      margin-left: 8px
+    }
+
+    .nav a {
+      padding: 9px 16px;
+      border-radius: 999px;
+      font-size: 14.5px;
+      font-weight: 600;
+      color: var(--ink-2);
+      transition: background .18s, color .18s;
+    }
+
+    .nav a:hover {
+      background: rgba(255, 255, 255, .07);
+      color: var(--ink)
+    }
+
+    .nav a[aria-current] {
+      background: var(--brand);
+      color: var(--on-brand);
+      box-shadow: 0 4px 12px rgba(255, 229, 0, .28);
+    }
+
+    .who {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 6px 7px 6px 15px;
+      background: rgba(255, 255, 255, .06);
+      border: 1px solid var(--edge);
+      border-radius: 999px;
+      font-size: 13.5px;
+      font-weight: 600;
+      box-shadow: var(--sh-sm);
+    }
+
+    .who .role {
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: .02em;
+      background: var(--brand);
+      color: var(--on-brand);
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+
+    /* ─── room status pills ──────────────────── */
+    /* answers "가도 되나?" before anything else — the 헛걸음 problem */
+    .ribbon {
+      padding: 22px 0 4px
+    }
+
+    .ribbon .wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap
+    }
+
+    .rb {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: var(--glass-quiet);
+      -webkit-backdrop-filter: var(--blur);
+      backdrop-filter: var(--blur);
+      border: 1px solid var(--edge);
+      font-size: 13.5px;
+      color: var(--ink-2);
+      box-shadow: var(--sh-sm);
+    }
+
+    .rb b {
+      font-weight: 700;
+      color: var(--ink)
+    }
+
+    .rb .mono {
+      font-size: 13px
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      flex: 0 0 auto;
+      box-shadow: 0 0 0 3px rgba(255, 229, 0, .35)
+    }
+
+    .dot.on {
+      background: var(--brand);
+      border: 1px solid rgba(17, 24, 39, .35)
+    }
+
+    .dot.off {
+      background: var(--ink-off);
+      border: 1px solid rgba(255, 255, 255, .14);
+      box-shadow: none
+    }
+
+    .rb-trial {
+      margin-left: auto;
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(143, 211, 236, .18);
+      -webkit-backdrop-filter: var(--blur);
+      backdrop-filter: var(--blur);
+      border: 1px solid rgba(143, 211, 236, .34);
+      padding: 7px 16px;
+      border-radius: 999px;
+      color: var(--ink);
+      box-shadow: var(--sh-sm);
+    }
+
+    /* ─── hero ───────────────────────────────── */
+    .hero {
+      padding: 22px 0 56px
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.14fr .86fr;
+      gap: 20px;
+      align-items: stretch
+    }
+
+    .panel {
+      border-radius: var(--r-slab);
+      position: relative;
+      overflow: hidden
+    }
+
+    /* .panel is declared after .stick, so the sticker radius needs the extra
+   specificity to survive — otherwise the hero cards silently take 28px. */
+    .panel.stick {
+      border-radius: 22px
+    }
+
+    /* scan panel */
+    .scan {
+      padding: 32px 34px 28px;
+      display: flex;
+      flex-direction: column
+    }
+
+    .today {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-2);
+      display: flex;
+      align-items: center;
+      gap: 9px
+    }
+
+    .today::after {
+      content: "";
+      flex: 1;
+      height: 1.5px;
+      background: var(--line)
+    }
+
+    .scan h1 {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: clamp(28px, 3.1vw, 39px);
+      line-height: 1.24;
+      letter-spacing: -.02em;
+      margin: 16px 0 10px;
+    }
+
+    .scan .lede {
+      color: var(--ink-2);
+      font-size: 14.5px;
+      max-width: 40ch
+    }
+
+    .steps {
+      display: flex;
+      gap: 9px;
+      align-items: center;
+      margin-top: 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--ink-2)
+    }
+
+    .steps span {
+      background: var(--sub);
+      border: 1.5px solid var(--line);
+      padding: 4px 11px;
+      border-radius: 999px
+    }
+
+    .steps i {
+      font-style: normal;
+      color: var(--ink-3)
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 15px 26px;
+      border-radius: 14px;
+      border: 2.5px solid var(--on-brand);
+      color: var(--on-brand);
+      font-size: 16.5px;
+      font-weight: 700;
+      box-shadow: var(--sticker);
+      transition: transform .12s, box-shadow .12s, background .12s;
+    }
+
+    .btn-primary {
+      background: var(--brand)
+    }
+
+    .btn-primary:hover {
+      background: var(--hover)
+    }
+
+    .btn:hover {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0 var(--stick-shadow)
+    }
+
+    .btn:active {
+      transform: translate(3px, 3px);
+      box-shadow: 0 0 0 var(--stick-shadow);
+      background: var(--active)
+    }
+
+    .scan-act {
+      margin-top: 22px;
+      display: flex
+    }
+
+    .scan-act .btn {
+      flex: 1
+    }
+
+    .fallback {
+      margin-top: 10px;
+      font-size: 12.5px;
+      color: var(--ink-2)
+    }
+
+    /* KUDOS lesson: search always visible, never behind a click */
+    .findbar {
+      margin-top: 22px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 16px 18px;
+      background: var(--card);
+      border: 2.5px solid var(--stick-edge);
+      border-radius: 18px;
+      box-shadow: 5px 5px 0 var(--stick-shadow);
+    }
+
+    .findbar .segrow {
+      margin: 0;
+      flex: 0 0 auto
+    }
+
+    .findbar .searchrow {
+      flex: 1;
+      margin: 0
+    }
+
+    .segrow {
+      display: flex;
+      gap: 6px
+    }
+
+    .seg {
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink-2);
+      border: 1.5px solid transparent;
+    }
+
+    .seg:hover {
+      background: var(--sub)
+    }
+
+    .seg[aria-selected="true"] {
+      background: var(--card);
+      border-color: var(--stick-edge);
+      color: var(--ink)
+    }
+
+    .searchrow {
+      display: flex;
+      align-items: stretch;
+      gap: 0
+    }
+
+    .searchrow input {
+      flex: 1;
+      min-width: 0;
+      border: 2.5px solid var(--stick-edge);
+      border-right: 0;
+      border-radius: 14px 0 0 14px;
+      padding: 13px 16px;
+      font-size: 15px;
+      background: var(--card);
+      outline-offset: -3px;
+    }
+
+    .searchrow input::placeholder {
+      color: var(--ink-3)
+    }
+
+    .find {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 0 22px;
+      font-size: 15.5px;
+      font-weight: 700;
+      background: var(--brand);
+      color: var(--on-brand);
+      border: 2.5px solid var(--on-brand);
+      border-radius: 0 14px 14px 0;
+      transition: background .12s;
+    }
+
+    .find:hover {
+      background: var(--hover)
+    }
+
+    .find:active {
+      background: var(--active)
+    }
+
+    /* my rentals */
+    .mine {
+      padding: 26px 26px 20px;
+      display: flex;
+      flex-direction: column;
+      background: var(--card)
+    }
+
+    .mine-head {
+      display: flex;
+      align-items: baseline;
+      gap: 10px
+    }
+
+    .mine-head h2 {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 20px;
+      letter-spacing: -.02em
+    }
+
+    .mine-head .n {
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink-2)
+    }
+
+    .mine-head a {
+      margin-left: auto;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink-2);
+      border-bottom: 1.5px solid var(--line-hard)
+    }
+
+    .mine-head a:hover {
+      color: var(--ink);
+      border-color: var(--ink)
+    }
+
+    .hint {
+      font-size: 12.5px;
+      color: var(--ink-2);
+      margin-top: 6px
+    }
+
+    .mine ul {
+      margin-top: 14px;
+      border-top: 1.5px solid var(--line-soft)
+    }
+
+    .mine li {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 2px;
+      border-bottom: 1.5px solid var(--line-soft)
+    }
+
+    .dial {
+      width: 38px;
+      height: 38px;
+      flex: 0 0 auto;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .5))
+    }
+
+    /* flat card, flat emblem — the soft drop shadow belongs to the glass rows only */
+    .mine .dial {
+      filter: none
+    }
+
+    .bk {
+      min-width: 0;
+      flex: 1
+    }
+
+    .bk b {
+      display: block;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis
+    }
+
+    .bk small {
+      display: block;
+      font-size: 12px;
+      color: var(--ink-2);
+      margin-top: 3px
+    }
+
+    .bk small .code {
+      font-family: var(--mono)
+    }
+
+    .due {
+      text-align: right;
+      flex: 0 0 auto
+    }
+
+    .due b {
+      display: block;
+      font-family: var(--mono);
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -.02em
+    }
+
+    .due small {
+      display: block;
+      font-family: var(--mono);
+      font-size: 11.5px;
+      color: var(--ink-2)
+    }
+
+    .due.late b {
+      color: var(--coral)
+    }
+
+    .mine-foot {
+      margin-top: auto;
+      margin-bottom: 6px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      background: var(--muted);
+      border: 1.5px solid var(--line);
+      border-radius: 12px;
+      padding: 13px 15px;
+      font-size: 12.5px;
+      line-height: 1.55;
+      color: var(--ink-2);
+    }
+
+    .mine-foot::before {
+      content: "";
+      flex: 0 0 auto;
+      width: 9px;
+      height: 9px;
+      margin-top: 5px;
+      border-radius: 50%;
+      background: var(--coral);
+      border: 1.5px solid var(--stick-edge);
+    }
+
+    .mine-foot b {
+      font-weight: 700;
+      color: var(--ink)
+    }
+
+    /* ─── shared section chrome ──────────────── */
+    /* no hard rules between bands — whitespace and glass do the separating */
+    .band {
+      padding: 34px 0 40px
+    }
+
+    .band-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 22px;
+      flex-wrap: wrap
+    }
+
+    .band-head h2 {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 25px;
+      letter-spacing: -.04em
+    }
+
+    .band-head p {
+      font-size: 13.5px;
+      color: var(--ink-2)
+    }
+
+    .band-head .more {
+      margin-left: auto;
+      font-size: 13.5px;
+      font-weight: 600;
+      padding: 8px 18px;
+      border-radius: 999px;
+      background: var(--glass-quiet);
+      -webkit-backdrop-filter: var(--blur);
+      backdrop-filter: var(--blur);
+      border: 1px solid var(--edge);
+      box-shadow: var(--sh-sm);
+      transition: transform .2s, box-shadow .2s;
+    }
+
+    .band-head .more:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--sh-md)
+    }
+
+    .tag-admin {
+      font-size: 11.5px;
+      font-weight: 700;
+      background: rgba(143, 211, 236, .18);
+      border: 1px solid rgba(143, 211, 236, .34);
+      padding: 4px 12px;
+      border-radius: 999px;
+    }
+
+    /* ─── quick links ────────────────────────── */
+    .quick {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 13px
+    }
+
+    .qtile {
+      position: relative;
+      border-radius: var(--r-card);
+      padding: 22px 12px 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 11px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.35;
+      transition: transform .24s cubic-bezier(.2, .7, .3, 1), box-shadow .24s, background .24s;
+    }
+
+    .qtile:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--sh-lg)
+    }
+
+    .qtile svg.ico {
+      stroke: var(--ink)
+    }
+
+    .qtile .go {
+      position: absolute;
+      top: 11px;
+      right: 12px;
+      opacity: .28;
+      transition: opacity .24s, transform .24s;
+    }
+
+    .qtile:hover .go {
+      opacity: .85;
+      transform: translate(1px, -1px)
+    }
+
+    .qtile .lock {
+      position: absolute;
+      top: 13px;
+      left: 13px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--sky);
+      box-shadow: 0 0 0 3px rgba(143, 211, 236, .28);
+    }
+
+    .quick-note {
+      margin-top: 16px;
+      font-size: 12.5px;
+      color: var(--ink-2);
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .quick-note i {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--sky);
+      box-shadow: 0 0 0 3px rgba(143, 211, 236, .28);
+      flex: 0 0 auto;
+    }
+
+    /* ─── shelf ──────────────────────────────── */
+    .tabs {
+      display: flex;
+      gap: 4px
+    }
+
+    .tab {
+      padding: 9px 17px;
+      border-radius: 999px;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--ink-2);
+      transition: background .18s, color .18s, box-shadow .18s;
+    }
+
+    .tab b {
+      font-family: var(--mono);
+      font-size: 12.5px;
+      font-weight: 600;
+      margin-left: 6px;
+      color: var(--ink-3)
+    }
+
+    .tab:hover {
+      background: rgba(255, 255, 255, .07)
+    }
+
+    .tab[aria-selected="true"] {
+      background: var(--sub);
+      color: var(--ink);
+      box-shadow: var(--sh-sm)
+    }
+
+    .tab[aria-selected="true"] b {
+      color: var(--ink-2)
+    }
+
+    .shelf {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px
+    }
+
+    .shelf[hidden] {
+      display: none
+    }
+
+    .book {
+      border-radius: var(--r-card);
+      padding: 24px 22px 18px;
+      display: flex;
+      flex-direction: column;
+      min-height: 194px;
+      transition: transform .24s cubic-bezier(.2, .7, .3, 1), box-shadow .24s, background .24s;
+    }
+
+    .book:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--sh-lg)
+    }
+
+    .cat {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--ink-2);
+      background: rgba(255, 255, 255, .07);
+      border: 1px solid var(--edge);
+      padding: 4px 12px;
+      border-radius: 999px;
+      align-self: flex-start;
+    }
+
+    .book h3 {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -.035em;
+      line-height: 1.35;
+      margin: 14px 0 6px
+    }
+
+    .book .by {
+      font-size: 12.5px;
+      color: var(--ink-2)
+    }
+
+    .copies {
+      font-size: 12px;
+      color: var(--ink-2);
+      margin-top: 8px
+    }
+
+    .book .foot {
+      margin-top: auto;
+      padding-top: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      border-top: 1px solid var(--edge-dim);
+    }
+
+    .book .foot .code {
+      font-family: var(--mono);
+      color: var(--ink-2);
+      font-size: 12px
+    }
+
+    .book .foot .ok {
+      margin-left: auto;
+      font-weight: 700;
+      color: var(--ink)
+    }
+
+    .book .foot .ok::before {
+      content: "";
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--brand);
+      box-shadow: 0 0 0 3px rgba(255, 229, 0, .3);
+      margin-right: 8px;
+      vertical-align: -1px;
+    }
+
+    .book .foot .new {
+      margin-left: auto;
+      font-family: var(--mono);
+      color: var(--ink-2);
+      font-size: 12px
+    }
+
+    /* ─── returns ────────────────────────────── */
+    .returns {
+      border-radius: var(--r-slab);
+      overflow: hidden
+    }
+
+    .returns .row {
+      display: grid;
+      grid-template-columns: 56px 1fr 168px 104px 116px;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 26px;
+      border-bottom: 1px solid var(--edge-dim);
+      transition: background .18s;
+    }
+
+    .returns .row:last-child {
+      border-bottom: 0
+    }
+
+    .returns .row:hover {
+      background: rgba(255, 255, 255, .05)
+    }
+
+    .returns .head {
+      background: rgba(255, 255, 255, .05);
+      padding-top: 13px;
+      padding-bottom: 13px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink-2);
+      letter-spacing: .01em;
+    }
+
+    .returns .head:hover {
+      background: rgba(255, 255, 255, .05)
+    }
+
+    .returns .head span:nth-child(4),
+    .returns .head span:last-child,
+    .returns .row>.due,
+    .returns .row>.out {
+      text-align: right
+    }
+
+    .out {
+      font-family: var(--mono);
+      font-size: 12.5px;
+      color: var(--ink-2)
+    }
+
+    .holder {
+      font-size: 14px;
+      font-weight: 600
+    }
+
+    .holder small {
+      display: block;
+      font-family: var(--mono);
+      font-size: 11.5px;
+      color: var(--ink-2);
+      font-weight: 400
+    }
+
+    .self {
+      font-size: 11px;
+      font-weight: 700;
+      background: var(--brand);
+      color: var(--on-brand);
+      border-radius: 999px;
+      padding: 2px 9px;
+      margin-left: 7px;
+      box-shadow: 0 2px 6px rgba(255, 229, 0, .3);
+    }
+
+    /* ─── footer ─────────────────────────────── */
+    /* NOTE: .sitefoot, not .foot — .foot is the book card's meta row. */
+    .sitefoot {
+      margin-top: 26px;
+      padding: 36px 0 56px;
+      border-top: 1px solid var(--edge-dim)
+    }
+
+    .sitefoot .wrap {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      flex-wrap: wrap
+    }
+
+    .sitefoot img {
+      height: 64px;
+      width: auto;
+      flex: 0 0 auto
+    }
+
+    .sitefoot p {
+      font-size: 13.5px;
+      color: var(--ink-2);
+      max-width: 52ch
+    }
+
+    .sitefoot .note {
+      margin-left: auto;
+      font-size: 12.5px;
+      color: var(--ink-2);
+      text-align: right
+    }
+
+    /* ─── load sequence ──────────────────────── */
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(16px)
+      }
+
+      to {
+        opacity: 1;
+        transform: none
+      }
+    }
+
+    .ribbon .wrap {
+      animation: rise .5s cubic-bezier(.2, .7, .3, 1) both
+    }
+
+    .hero-grid>.panel {
+      animation: rise .55s cubic-bezier(.2, .7, .3, 1) both
+    }
+
+    .hero-grid>.panel:nth-child(1) {
+      animation-delay: .06s
+    }
+
+    .hero-grid>.panel:nth-child(2) {
+      animation-delay: .13s
+    }
+
+    .findbar {
+      animation: rise .55s cubic-bezier(.2, .7, .3, 1) .2s both
+    }
+
+    @media (prefers-reduced-motion:reduce) {
+      * {
+        animation: none !important;
+        transition: none !important
+      }
+
+      .btn:hover,
+      .book:hover,
+      .qtile:hover,
+      .find:hover,
+      .band-head .more:hover {
+        transform: none
+      }
+    }
+
+    /* ─── responsive ─────────────────────────── */
+    @media (max-width:1040px) {
+      .quick {
+        grid-template-columns: repeat(4, 1fr)
+      }
+    }
+
+    @media (max-width:940px) {
+      .hero-grid {
+        grid-template-columns: 1fr
+      }
+
+      .shelf {
+        grid-template-columns: repeat(2, 1fr)
+      }
+
+      .nav {
+        display: none
+      }
+
+      .returns .row {
+        grid-template-columns: 46px 1fr 96px;
+        row-gap: 5px
+      }
+
+      .returns .row .holder {
+        grid-column: 2/4;
+        order: 3
+      }
+
+      .returns .row .out {
+        display: none
+      }
+
+      .returns .head span:nth-child(3),
+      .returns .head span:nth-child(4) {
+        display: none
+      }
+    }
+
+    @media (max-width:760px) {
+      .findbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px
+      }
+    }
+
+    @media (max-width:600px) {
+      .wrap {
+        padding: 0 20px
+      }
+
+      .scan {
+        padding: 28px 24px 26px
+      }
+
+      .mine {
+        padding: 24px 20px 18px
+      }
+
+      .shelf {
+        grid-template-columns: 1fr
+      }
+
+      .book {
+        min-height: 0
+      }
+
+      .quick {
+        grid-template-columns: repeat(3, 1fr)
+      }
+
+      .rb-trial {
+        margin-left: 0
+      }
+
+      .sitefoot .note {
+        margin-left: 0;
+        text-align: left
+      }
+
+      .band-head .more {
+        margin-left: 0
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="sky" aria-hidden="true"></div>
+
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="#" aria-label="해달 도서 홈">
+        <img src="../../logos/haedal-logo-0.png" alt="해달">
+      </a>
+      <nav class="nav">
+        <a href="#" aria-current="page">홈</a>
+        <a href="#shelf">도서 찾기</a>
+        <a href="#mine">내 대여</a>
+        <a href="#returns">서가 현황</a>
+      </nav>
+      <div class="who">김도현 <span class="role">운영진</span></div>
+    </div>
+  </header>
+
+  <!-- 가기 전에 알아야 할 것 -->
+  <div class="ribbon">
+    <div class="wrap">
+      <span class="rb"><i class="dot on"></i><b>동아리방 열림</b></span>
+      <span class="rb">오늘 <span class="mono">10:00 – 20:00</span></span>
+      <span class="rb">서가 <b>62권</b> 중 <b>57권</b> 대여 가능</span>
+      <span class="rb-trial">시범 운영 중</span>
+    </div>
+  </div>
+
+  <main>
+
+    <!-- ── hero ─────────────────────────────── -->
+    <section class="hero">
+      <div class="wrap">
+        <div class="hero-grid">
+
+          <div class="panel stick scan">
+            <div class="today"><span class="mono">2026-08-12 수요일</span></div>
+            <h1>책을 꺼냈다면<br>라벨을 스캔하세요</h1>
+            <p class="lede">대여도 반납도 같은 버튼에서 시작합니다. 스캔하면 시스템이 어느 쪽인지 알아서 판단합니다.</p>
+            <div class="steps"><span>스캔</span><i>→</i><span>확인</span><i>→</i><span>확정</span></div>
+
+            <div class="scan-act">
+              <button class="btn btn-primary">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#111827" stroke-width="2.3"
+                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path
+                    d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3" />
+                  <path d="M3 12h18" />
+                </svg>
+                라벨 스캔
+              </button>
+            </div>
+            <p class="fallback">라벨이 지워졌거나 카메라를 쓸 수 없으면 아래에서 찾으세요.</p>
+          </div>
+
+          <div class="panel stick mine" id="mine">
+            <div class="mine-head">
+              <h2>내 대여</h2>
+              <span class="n">3권</span>
+              <a href="#">이력</a>
+            </div>
+            <p class="hint">해가 기울수록 반납일이 가깝습니다.</p>
+
+            <ul>
+              <li>
+                <!-- D-2 · 남은 2/14일 -->
+                <svg class="dial" viewBox="0 0 40 40" role="img" aria-label="반납까지 2일">
+                  <circle cx="20" cy="20" r="15" fill="#FFE500" />
+                  <path d="M20 5 A15 15 0 0 1 20 35 Z" fill="#3A4463" />
+                  <ellipse cx="20" cy="20" rx="10.7" ry="15" fill="#3A4463" />
+                  <circle cx="20" cy="20" r="15" fill="none" stroke="#D8D4C4" stroke-width="2.4" />
+                </svg>
+                <div class="bk"><b>클린 코드</b><small>로버트 C. 마틴 · <span class="code">A-014</span></small></div>
+                <div class="due"><b>D-2</b><small>08-14 반납</small></div>
+              </li>
+              <li>
+                <!-- D-9 · 남은 9/14일 -->
+                <svg class="dial" viewBox="0 0 40 40" role="img" aria-label="반납까지 9일">
+                  <circle cx="20" cy="20" r="15" fill="#FFE500" />
+                  <path d="M20 5 A15 15 0 0 1 20 35 Z" fill="#3A4463" />
+                  <ellipse cx="20" cy="20" rx="4.3" ry="15" fill="#FFE500" />
+                  <circle cx="20" cy="20" r="15" fill="none" stroke="#D8D4C4" stroke-width="2.4" />
+                </svg>
+                <div class="bk"><b>함께 자라기</b><small>김창준 · <span class="code">C-007</span></small></div>
+                <div class="due"><b>D-9</b><small>08-21 반납</small></div>
+              </li>
+              <li>
+                <!-- 연체 -->
+                <svg class="dial" viewBox="0 0 40 40" role="img" aria-label="2일 연체">
+                  <circle cx="20" cy="20" r="15" fill="#E8564E" />
+                  <circle cx="20" cy="20" r="15" fill="none" stroke="#D8D4C4" stroke-width="2.4" />
+                </svg>
+                <div class="bk"><b>오브젝트</b><small>조영호 · <span class="code">A-008</span></small></div>
+                <div class="due late"><b>+2일</b><small>08-10 지남</small></div>
+              </li>
+            </ul>
+
+            <p class="mine-foot"><span><b>오브젝트</b>가 반납일에서 2일 지났습니다. 연체 중에도 대여는 막히지 않습니다. 다음 방문에 함께 돌려놓으세요.</span></p>
+          </div>
+
+        </div>
+
+        <div class="findbar">
+          <div class="segrow" role="tablist" aria-label="검색 기준">
+            <button class="seg" role="tab" aria-selected="true" data-ph="예: 클린 코드, 마틴 파울러">제목·저자</button>
+            <button class="seg" role="tab" aria-selected="false" data-ph="예: A-014">라벨코드</button>
+          </div>
+          <div class="searchrow">
+            <input id="q" type="search" placeholder="예: 클린 코드, 마틴 파울러" aria-label="도서 검색">
+            <button class="find">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111827" stroke-width="2.6"
+                stroke-linecap="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" />
+                <path d="M20 20l-3.5-3.5" />
+              </svg>
+              찾기
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── quick links ──────────────────────── -->
+    <section class="band">
+      <div class="wrap">
+        <div class="band-head">
+          <h2>바로가기</h2>
+          <p>자주 여는 화면입니다.</p>
+        </div>
+
+        <div class="quick">
+          <a class="qtile glass" href="#shelf">
+            <svg class="go" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#EDE9DA" stroke-width="2.6"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 17L17 7M9 7h8v8" />
+            </svg>
+            <svg class="ico" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="1.8"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h6z" />
+            </svg>
+            도서 목록
+          </a>
+          <a class="qtile glass" href="#">
+            <svg class="go" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#EDE9DA" stroke-width="2.6"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 17L17 7M9 7h8v8" />
+            </svg>
+            <svg class="ico" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="1.8"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="8.5" />
+              <path d="M12 7.5V12l3 2" />
+            </svg>
+            내 대여 이력
+          </a>
+          <a class="qtile glass" href="#">
+            <span class="lock" aria-hidden="true"></span>
+            <svg class="go" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#EDE9DA" stroke-width="2.6"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 17L17 7M9 7h8v8" />
+            </svg>
+            <svg class="ico" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="1.8"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M5 4h9l5 5v11H5z" />
+              <path d="M12 11v6M9 14h6" />
+            </svg>
+            도서 등록
+          </a>
+          <a class="qtile glass" href="#">
+            <span class="lock" aria-hidden="true"></span>
+            <svg class="go" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#EDE9DA" stroke-width="2.6"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 17L17 7M9 7h8v8" />
+            </svg>
+            <svg class="ico" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="1.8"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 20h4L19 9l-4-4L4 16z" />
+              <path d="M14 6l4 4" />
+            </svg>
+            도서 수정
+          </a>
+          <a class="qtile glass" href="#">
+            <span class="lock" aria-hidden="true"></span>
+            <svg class="go" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#EDE9DA" stroke-width="2.6"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 17L17 7M9 7h8v8" />
+            </svg>
+            <svg class="ico" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="1.8"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="4" y="4" width="7" height="7" rx="1.5" />
+              <rect x="13" y="4" width="7" height="7" rx="1.5" />
+              <rect x="4" y="13" width="7" height="7" rx="1.5" />
+              <path d="M13 13h3v3M20 20v-3M17 20h3" />
+            </svg>
+            라벨 발급
+          </a>
+          <a class="qtile glass" href="#">
+            <span class="lock" aria-hidden="true"></span>
+            <svg class="go" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#EDE9DA" stroke-width="2.6"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 17L17 7M9 7h8v8" />
+            </svg>
+            <svg class="ico" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="1.8"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="10" cy="8.5" r="3.5" />
+              <path d="M3.5 19c.6-3.4 3.3-5.5 6.5-5.5 1 0 2 .2 2.8.6" />
+              <path d="M15 17.5l2 2 4-4" />
+            </svg>
+            가입 승인
+          </a>
+          <a class="qtile glass" href="#returns">
+            <span class="lock" aria-hidden="true"></span>
+            <svg class="go" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#EDE9DA" stroke-width="2.6"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 17L17 7M9 7h8v8" />
+            </svg>
+            <svg class="ico" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="1.8"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 6h16M4 12h16M4 18h16" />
+              <circle cx="8" cy="6" r="1.6" fill="#EDE9DA" stroke="none" />
+              <circle cx="14" cy="12" r="1.6" fill="#EDE9DA" stroke="none" />
+              <circle cx="10" cy="18" r="1.6" fill="#EDE9DA" stroke="none" />
+            </svg>
+            전체 대여 현황
+          </a>
+        </div>
+
+        <p class="quick-note"><i aria-hidden="true"></i>점이 있는 항목은 운영진만 사용합니다.</p>
+      </div>
+    </section>
+
+    <!-- ── shelf ────────────────────────────── -->
+    <section class="band" id="shelf">
+      <div class="wrap">
+        <div class="band-head">
+          <h2>서가</h2>
+          <div class="tabs" role="tablist" aria-label="서가 보기">
+            <button class="tab" role="tab" aria-selected="true" aria-controls="shelf-available">대여 가능 <b>57</b></button>
+            <button class="tab" role="tab" aria-selected="false" aria-controls="shelf-new">새로 들어온 책 <b>6</b></button>
+          </div>
+          <a class="more" href="#">전체 62권</a>
+        </div>
+
+        <div class="shelf" id="shelf-available" role="tabpanel">
+          <article class="book glass" data-url="./main-prototype-book.html">
+            <span class="cat">전공</span>
+            <h3>리팩터링</h3>
+            <p class="by">마틴 파울러 · 한빛미디어</p>
+            <p class="copies">2권 보유 · 1권 대여 가능</p>
+            <div class="foot"><span class="code">A-019</span><span class="ok">대여 가능</span></div>
+          </article>
+          <article class="book glass" data-url="./main-prototype-book.html">
+            <span class="cat">전공</span>
+            <h3>데이터 중심 애플리케이션 설계</h3>
+            <p class="by">마틴 클레프만 · 위키북스</p>
+            <div class="foot"><span class="code">B-007</span><span class="ok">대여 가능</span></div>
+          </article>
+          <article class="book glass" data-url="./main-prototype-book.html">
+            <span class="cat">전공</span>
+            <h3>프로그래머의 뇌</h3>
+            <p class="by">펠리에너 헤르만스 · 제이펍</p>
+            <div class="foot"><span class="code">B-011</span><span class="ok">대여 가능</span></div>
+          </article>
+          <article class="book glass" data-url="./main-prototype-book.html">
+            <span class="cat">자기계발</span>
+            <h3>그릿</h3>
+            <p class="by">앤절라 더크워스 · 비즈니스북스</p>
+            <div class="foot"><span class="code">C-002</span><span class="ok">대여 가능</span></div>
+          </article>
+        </div>
+
+        <div class="shelf" id="shelf-new" role="tabpanel" hidden>
+          <article class="book glass" data-url="./main-prototype-book.html">
+            <span class="cat">전공</span>
+            <h3>러닝 타입스크립트</h3>
+            <p class="by">조시 골드버그 · 한빛미디어</p>
+            <div class="foot"><span class="code">A-024</span><span class="new">08-09 등록</span></div>
+          </article>
+          <article class="book glass" data-url="./main-prototype-book.html">
+            <span class="cat">전공</span>
+            <h3>실용주의 프로그래머</h3>
+            <p class="by">데이비드 토머스 · 인사이트</p>
+            <div class="foot"><span class="code">A-025</span><span class="new">08-09 등록</span></div>
+          </article>
+          <article class="book glass" data-url="./main-prototype-book.html">
+            <span class="cat">전공</span>
+            <h3>도메인 주도 설계 첫걸음</h3>
+            <p class="by">블라드 코노노프 · 위키북스</p>
+            <div class="foot"><span class="code">B-016</span><span class="new">08-05 등록</span></div>
+          </article>
+          <article class="book glass" data-url="./main-prototype-book.html">
+            <span class="cat">자기계발</span>
+            <h3>아주 작은 습관의 힘</h3>
+            <p class="by">제임스 클리어 · 비즈니스북스</p>
+            <div class="foot"><span class="code">C-011</span><span class="new">08-05 등록</span></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── returns ──────────────────────────── -->
+    <section class="band" id="returns">
+      <div class="wrap">
+        <div class="band-head">
+          <h2>돌아올 책</h2>
+          <span class="tag-admin">운영진</span>
+          <p>회수가 필요한 순서입니다.</p>
+          <a class="more" href="#">전체 대여 현황</a>
+        </div>
+
+        <div class="returns glass">
+          <div class="row head">
+            <span>기한</span><span>도서</span><span>대여자</span><span>대여일</span><span>반납예정일</span>
+          </div>
+
+          <div class="row">
+            <svg class="dial" viewBox="0 0 40 40" role="img" aria-label="2일 연체">
+              <circle cx="20" cy="20" r="15" fill="#E8564E" />
+              <circle cx="20" cy="20" r="15" fill="none" stroke="#D8D4C4" stroke-width="2.4" />
+            </svg>
+            <div class="bk"><b>오브젝트</b><small>조영호 · <span class="code">A-008</span></small></div>
+            <div class="holder">김도현<span class="self">나</span><small>20211043</small></div>
+            <div class="out">07-27</div>
+            <div class="due late"><b>+2일</b><small>08-10</small></div>
+          </div>
+
+          <div class="row">
+            <svg class="dial" viewBox="0 0 40 40" role="img" aria-label="오늘 반납">
+              <circle cx="20" cy="20" r="15" fill="#FFE500" />
+              <path d="M20 5 A15 15 0 0 1 20 35 Z" fill="#3A4463" />
+              <ellipse cx="20" cy="20" rx="15" ry="15" fill="#3A4463" />
+              <circle cx="20" cy="20" r="15" fill="none" stroke="#D8D4C4" stroke-width="2.4" />
+            </svg>
+            <div class="bk"><b>밑바닥부터 시작하는 딥러닝</b><small>사이토 고키 · <span class="code">B-003</span></small></div>
+            <div class="holder">정하늘<small>20223317</small></div>
+            <div class="out">07-29</div>
+            <div class="due"><b>오늘</b><small>08-12</small></div>
+          </div>
+
+          <div class="row">
+            <svg class="dial" viewBox="0 0 40 40" role="img" aria-label="반납까지 2일">
+              <circle cx="20" cy="20" r="15" fill="#FFE500" />
+              <path d="M20 5 A15 15 0 0 1 20 35 Z" fill="#3A4463" />
+              <ellipse cx="20" cy="20" rx="10.7" ry="15" fill="#3A4463" />
+              <circle cx="20" cy="20" r="15" fill="none" stroke="#D8D4C4" stroke-width="2.4" />
+            </svg>
+            <div class="bk"><b>클린 코드</b><small>로버트 C. 마틴 · <span class="code">A-014</span></small></div>
+            <div class="holder">김도현<span class="self">나</span><small>20211043</small></div>
+            <div class="out">07-31</div>
+            <div class="due"><b>D-2</b><small>08-14</small></div>
+          </div>
+
+          <div class="row">
+            <svg class="dial" viewBox="0 0 40 40" role="img" aria-label="반납까지 3일">
+              <circle cx="20" cy="20" r="15" fill="#FFE500" />
+              <path d="M20 5 A15 15 0 0 1 20 35 Z" fill="#3A4463" />
+              <ellipse cx="20" cy="20" rx="8.6" ry="15" fill="#3A4463" />
+              <circle cx="20" cy="20" r="15" fill="none" stroke="#D8D4C4" stroke-width="2.4" />
+            </svg>
+            <div class="bk"><b>이펙티브 타입스크립트</b><small>댄 밴더캄 · <span class="code">A-021</span></small></div>
+            <div class="holder">김서준<small>20219902</small></div>
+            <div class="out">08-01</div>
+            <div class="due"><b>D-3</b><small>08-15</small></div>
+          </div>
+
+          <div class="row">
+            <svg class="dial" viewBox="0 0 40 40" role="img" aria-label="반납까지 4일">
+              <circle cx="20" cy="20" r="15" fill="#FFE500" />
+              <path d="M20 5 A15 15 0 0 1 20 35 Z" fill="#3A4463" />
+              <ellipse cx="20" cy="20" rx="6.4" ry="15" fill="#3A4463" />
+              <circle cx="20" cy="20" r="15" fill="none" stroke="#D8D4C4" stroke-width="2.4" />
+            </svg>
+            <div class="bk"><b>모던 자바스크립트 Deep Dive</b><small>이웅모 · <span class="code">B-014</span></small></div>
+            <div class="holder">이도윤<small>20230518</small></div>
+            <div class="out">08-02</div>
+            <div class="due"><b>D-4</b><small>08-16</small></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="sitefoot">
+    <div class="wrap">
+      <img src="../../logos/haedal-logo-1.png" alt="">
+      <p>시범 운영 기간입니다. 스캔이 실패하면 종이 장부에도 적어 두세요. 다음 방문 때 운영진이 맞춰 놓습니다.</p>
+      <p class="note">해달 도서 관리 시스템<br><span class="mono">프로토타입 · 2026-08</span></p>
+    </div>
+  </footer>
+
+  <script>
+    // search scope tabs — swap the example, not the field
+    document.querySelectorAll('.seg').forEach(function (b) {
+      b.addEventListener('click', function () {
+        document.querySelectorAll('.seg').forEach(function (x) { x.setAttribute('aria-selected', 'false'); });
+        b.setAttribute('aria-selected', 'true');
+        document.getElementById('q').placeholder = b.dataset.ph;
+      });
+    });
+
+    // shelf tabs
+    document.querySelectorAll('.tab').forEach(function (t) {
+      t.addEventListener('click', function () {
+        document.querySelectorAll('.tab').forEach(function (x) {
+          x.setAttribute('aria-selected', 'false');
+          document.getElementById(x.getAttribute('aria-controls')).hidden = true;
+        });
+        t.setAttribute('aria-selected', 'true');
+        document.getElementById(t.getAttribute('aria-controls')).hidden = false;
+      });
+    });
+
+    // book details
+    document.querySelectorAll('article.book.glass').forEach(function (a) {
+      a.addEventListener('click', function () {
+        const targetUrl = a.getAttribute('data-url');
+
+        if (targetUrl) {
+          window.location.href = targetUrl;
+        }
+      });
+    });
+  </script>
+
+</body>
+
+</html>

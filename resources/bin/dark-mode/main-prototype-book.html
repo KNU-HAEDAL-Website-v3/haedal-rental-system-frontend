@@ -1,0 +1,1116 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>해달 도서 — 리팩터링</title>
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: 'GmarketSans';
+      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansBold.woff') format('woff');
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    /* ─────────────────────────────────────────────
+       TOKENS — resources/bin/dark-mode/color-palette-info.md
+       달 모드. 토큰 이름은 라이트와 같고, 표면과 텍스트 램프만 뒤집는다.
+       brand · hover · active · status 는 라이트 값을 그대로 쓴다.
+       ───────────────────────────────────────────── */
+    :root {
+      /* 네이티브 입력과 스크롤바까지 어두워진다 */
+      color-scheme: dark;
+
+      --base: #0E1426;
+      --card: #182034;
+      --sub: #222B44;
+      --brand: #FFE500;
+      --muted: #1B2133;
+
+      --line: #333D5B;
+      --line-soft: #262E47;
+      --line-hard: #4B577A;
+
+      --hover: #FFD166;
+      --active: #FEE140;
+
+      --ink: #F5F1E3;
+      --ink-2: #B6BED2;
+      --ink-3: #8892A8;
+      --ink-off: #5A6480;
+
+      --error: #E8564E;
+      --warning: #FFD166;
+      --success: #00FD8F;
+      --info: #8FD3EC;
+
+      --glass-quiet: rgba(46, 58, 92, .45);
+      --edge: rgba(198, 212, 255, .16);
+      --edge-dim: rgba(200, 214, 255, .10);
+      --blur: blur(24px) saturate(180%);
+      --bevel: inset 0 1px 0 rgba(255, 255, 255, .10), inset 0 -1px 0 rgba(0, 0, 0, .30);
+
+      /* 라이트에서는 --ink 하나가 본문 색·스티커 테두리·하드 섀도를 겸했다.
+     어두운 배경에서는 셋이 갈라져 각자 토큰을 갖는다. */
+      --on-brand: #111827;
+      /* 노랑 표면 위의 글자·아이콘·테두리 */
+      --stick-edge: rgba(245, 241, 227, .82);
+      /* 어두운 표면 위 스티커 테두리 — 달빛이 선 자리 */
+      --stick-shadow: #04070E;
+      /* 하드 오프셋 — 배경보다 어두워 빛이 닿지 않은 구멍으로 읽힌다 */
+
+      --sticker: 3px 3px 0 var(--stick-shadow);
+      --sh-sm: 0 1px 2px rgba(0, 0, 0, .40), 0 7px 18px rgba(0, 0, 0, .35);
+      --sh-md: 0 2px 8px rgba(0, 0, 0, .42), 0 18px 42px rgba(0, 0, 0, .45);
+
+      --display: 'GmarketSans', 'Pretendard', system-ui, sans-serif;
+      --body: 'Pretendard', -apple-system, 'Segoe UI', sans-serif;
+      --mono: 'IBM Plex Mono', ui-monospace, 'Consolas', monospace;
+
+      --r-slab: 28px;
+      --r-card: 20px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%
+    }
+
+    body {
+      background: var(--base);
+      color: var(--ink);
+      font-family: var(--body);
+      font-size: 15px;
+      line-height: 1.6;
+      letter-spacing: -.011em;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+      position: relative;
+      min-height: 100%;
+    }
+
+    .sky {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background:
+        radial-gradient(880px 700px at 4% 40px, rgba(255, 229, 0, .13), transparent 64%),
+        radial-gradient(700px 560px at 104% -40px, rgba(143, 211, 236, .13), transparent 64%),
+        radial-gradient(700px 560px at 62% 360px, rgba(150, 170, 230, .10), transparent 62%),
+        radial-gradient(820px 700px at 96% 820px, rgba(255, 209, 102, .11), transparent 64%),
+        radial-gradient(660px 560px at -10% 1180px, rgba(232, 86, 78, .12), transparent 66%),
+        radial-gradient(900px 740px at 76% 1560px, rgba(255, 229, 0, .10), transparent 64%),
+        var(--base);
+    }
+
+    img {
+      max-width: 100%;
+      display: block
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none
+    }
+
+    button {
+      font: inherit;
+      color: inherit;
+      cursor: pointer;
+      border: 0;
+      background: none
+    }
+
+    ul {
+      list-style: none
+    }
+
+    .mono {
+      font-family: var(--mono);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0
+    }
+
+    .wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 34px
+    }
+
+    /* 어두운 바다 위에서는 border.focus(#FFE500)가 그대로 보인다 — 정식 토큰을 쓴다 */
+    :focus-visible {
+      outline: 2.5px solid var(--brand);
+      outline-offset: 3px;
+      border-radius: 10px
+    }
+
+    /* 글래스 = 둘러보는 표면 */
+    .glass {
+      background: linear-gradient(142deg,
+          rgba(86, 102, 148, .42) 0%,
+          rgba(36, 46, 74, .40) 46%,
+          rgba(20, 28, 48, .34) 100%);
+      -webkit-backdrop-filter: var(--blur);
+      backdrop-filter: var(--blur);
+      border: 1px solid var(--edge);
+      box-shadow: var(--sh-md), var(--bevel);
+    }
+
+    /* 스티커 = 행동할 수 있는 표면. 이 페이지에서는 "집어갈 수 있는 복본"이
+       스티커가 된다 — 테두리만 보고 어느 권을 가져갈 수 있는지 읽힌다. */
+    .stick {
+      background: var(--card);
+      border: 2.5px solid var(--stick-edge);
+      border-radius: 22px;
+      box-shadow: 5px 5px 0 var(--stick-shadow);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+
+    /* ─── header ─────────────────────────────── */
+    .top {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: rgba(14, 20, 38, .66);
+      -webkit-backdrop-filter: blur(20px) saturate(170%);
+      backdrop-filter: blur(20px) saturate(170%);
+      border-bottom: 1px solid var(--edge-dim);
+    }
+
+    .top .wrap {
+      display: flex;
+      align-items: center;
+      gap: 26px;
+      height: 74px
+    }
+
+    .brand img {
+      height: 38px;
+      width: auto
+    }
+
+    .nav {
+      display: flex;
+      gap: 2px;
+      margin-left: 8px
+    }
+
+    .nav a {
+      padding: 9px 16px;
+      border-radius: 999px;
+      font-size: 14.5px;
+      font-weight: 600;
+      color: var(--ink-2);
+      transition: background .18s, color .18s;
+    }
+
+    .nav a:hover {
+      background: rgba(255, 255, 255, .07);
+      color: var(--ink)
+    }
+
+    .nav a[aria-current] {
+      background: var(--brand);
+      color: var(--on-brand);
+      box-shadow: 0 4px 12px rgba(255, 229, 0, .28);
+    }
+
+    .who {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 6px 7px 6px 15px;
+      background: rgba(255, 255, 255, .06);
+      border: 1px solid var(--edge);
+      border-radius: 999px;
+      font-size: 13.5px;
+      font-weight: 600;
+      box-shadow: var(--sh-sm);
+    }
+
+    .who .role {
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: .02em;
+      background: var(--brand);
+      color: var(--on-brand);
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+
+    /* ─── back + ribbon ──────────────────────── */
+    .crumb {
+      padding: 20px 0 0
+    }
+
+    .crumb .wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap
+    }
+
+    .back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--ink-2);
+      background: var(--glass-quiet);
+      -webkit-backdrop-filter: var(--blur);
+      backdrop-filter: var(--blur);
+      border: 1px solid var(--edge);
+      box-shadow: var(--sh-sm);
+      transition: transform .2s, color .2s;
+    }
+
+    .back:hover {
+      color: var(--ink);
+      transform: translateY(-2px)
+    }
+
+    .rb {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: var(--glass-quiet);
+      -webkit-backdrop-filter: var(--blur);
+      backdrop-filter: var(--blur);
+      border: 1px solid var(--edge);
+      font-size: 13.5px;
+      color: var(--ink-2);
+      box-shadow: var(--sh-sm);
+    }
+
+    .rb b {
+      font-weight: 700;
+      color: var(--ink)
+    }
+
+    .rb .mono {
+      font-size: 13px
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      flex: 0 0 auto;
+      background: var(--brand);
+      border: 1px solid rgba(17, 24, 39, .35);
+      box-shadow: 0 0 0 3px rgba(255, 229, 0, .35);
+    }
+
+    /* ─── hero ───────────────────────────────── */
+    .hero {
+      padding: 20px 0 44px
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.14fr .86fr;
+      gap: 20px;
+      align-items: stretch
+    }
+
+    .panel {
+      border-radius: var(--r-slab);
+      position: relative
+    }
+
+    .panel.stick {
+      border-radius: 22px
+    }
+
+    .ident {
+      padding: 32px 34px 28px;
+      display: flex;
+      flex-direction: column
+    }
+
+    /* stretch 라서 텍스트 열이 표지 높이를 따라간다 — 서지가 표지 아래끝에
+       맞춰 내려앉고, 표지 오른쪽 아래에 빈 공간이 남지 않는다. */
+    .ident-top {
+      display: flex;
+      gap: 26px;
+      align-items: stretch
+    }
+
+    .ident-text {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column
+    }
+
+    /* ─── 표지 ───────────────────────────────── */
+    /* 데이터 모델에 표지 필드가 없고, ISBN도 "없을 수 있음"이라 표지가 없는
+       책이 흔하다. 그래서 파일이 있으면 쓰고 없으면 제목으로 표지를 만든다 —
+       회색 "이미지 없음" 상자는 장서 절반이 그렇게 보인다는 뜻이라 쓰지 않는다. */
+    .cover {
+      flex: 0 0 auto;
+      width: 152px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .cover-face {
+      position: relative;
+      width: 152px;
+      height: 212px;
+      border-radius: 10px;
+      overflow: hidden;
+      /* 표지는 표면이 아니라 사물이라 두 모드 모두 어두운 판을 유지한다 */
+      background: #0B1120;
+      border: 1.5px solid var(--line);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, .5), 0 14px 28px rgba(0, 0, 0, .55);
+    }
+
+    .cover-face img {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* 제목으로 만든 표지 */
+    .cover-gen {
+      position: absolute;
+      inset: 0;
+      padding: 18px 16px 16px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 책등 — 평평한 사각형이 아니라 책으로 읽히게 하는 유일한 장치 */
+    .cover-gen::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 7px;
+      background: rgba(255, 255, 255, .1);
+    }
+
+    .cover-gen .g-cat {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      color: rgba(255, 229, 0, .72);
+    }
+
+    .cover-gen .g-title {
+      margin-top: 10px;
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 19px;
+      line-height: 1.24;
+      letter-spacing: -.03em;
+      color: var(--brand);
+    }
+
+    .cover-gen .g-by {
+      margin-top: auto;
+      font-size: 11px;
+      color: rgba(255, 255, 255, .6);
+    }
+
+    .cover-note {
+      font-size: 11px;
+      line-height: 1.45;
+      color: var(--ink-2);
+    }
+
+    .cover-note[hidden] {
+      display: none
+    }
+
+    .cat {
+      align-self: flex-start;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--ink-2);
+      background: var(--sub);
+      border: 1.5px solid var(--line);
+      padding: 4px 12px;
+      border-radius: 999px;
+    }
+
+    .ident h1 {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: clamp(30px, 3.4vw, 42px);
+      line-height: 1.2;
+      letter-spacing: -.035em;
+      margin: 16px 0 12px;
+    }
+
+    .byline {
+      font-size: 15px;
+      color: var(--ink-2)
+    }
+
+    .byline b {
+      color: var(--ink);
+      font-weight: 600
+    }
+
+    /* 서지는 별도 섹션이 아니라 정체성 카드 안에 둔다. 따로 빼면 상단
+       byline의 저자·출판사와 그대로 중복되고, 카드에는 빈 공간이 남는다. */
+    .specs {
+      margin-top: auto;
+      padding-top: 24px;
+      border-top: 1.5px solid var(--line-soft);
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px 22px;
+    }
+
+    .specs dt {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink-2)
+    }
+
+    .specs dd {
+      margin-top: 4px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -.02em;
+    }
+
+    .specs dd.mono {
+      font-weight: 500;
+      font-size: 13.5px
+    }
+
+    /* 지금 상태 — 이 페이지가 답해야 하는 질문 */
+    .status {
+      padding: 28px 28px 24px;
+      display: flex;
+      flex-direction: column;
+      background: var(--card)
+    }
+
+    .eyebrow {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .02em;
+      color: var(--ink-2);
+    }
+
+    .answer {
+      margin-top: 12px;
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 24px;
+      line-height: 1.32;
+      letter-spacing: -.03em;
+    }
+
+    .answer em {
+      font-style: normal;
+      background: linear-gradient(transparent 84%, var(--brand) 84%);
+      padding: 0 2px;
+    }
+
+    .where {
+      margin-top: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--sub);
+      border: 1.5px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 13px;
+      color: var(--ink-2);
+    }
+
+    .where .code {
+      font-family: var(--mono);
+      font-weight: 600;
+      color: var(--ink);
+      font-size: 14px;
+    }
+
+    .status-act {
+      margin-top: auto;
+      padding-top: 18px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 15px 26px;
+      border-radius: 14px;
+      border: 2.5px solid var(--on-brand);
+      background: var(--brand);
+      color: var(--on-brand);
+      font-size: 16.5px;
+      font-weight: 700;
+      box-shadow: var(--sticker);
+      transition: transform .12s, box-shadow .12s, background .12s;
+    }
+
+    .btn:hover {
+      background: var(--hover);
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0 var(--stick-shadow)
+    }
+
+    .btn:active {
+      background: var(--active);
+      transform: translate(3px, 3px);
+      box-shadow: 0 0 0 var(--stick-shadow)
+    }
+
+    .btnnote {
+      margin-top: 10px;
+      font-size: 12.5px;
+      color: var(--ink-2);
+      text-align: center;
+    }
+
+    /* ─── 공통 섹션 ──────────────────────────── */
+    .band {
+      padding: 12px 0 44px
+    }
+
+    .band-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap
+    }
+
+    .band-head h2 {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 25px;
+      letter-spacing: -.04em
+    }
+
+    .band-head .n {
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink-2)
+    }
+
+    .band-head p {
+      font-size: 13.5px;
+      color: var(--ink-2)
+    }
+
+    .tag-admin {
+      font-size: 11.5px;
+      font-weight: 700;
+      background: rgba(143, 211, 236, .18);
+      border: 1px solid rgba(143, 211, 236, .34);
+      padding: 4px 12px;
+      border-radius: 999px;
+    }
+
+    /* ─── 복본 ───────────────────────────────── */
+    /* FR-BOK-007. 같은 책이라도 실물마다 라벨코드와 상태가 따로다.
+       빌릴 수 있는 권만 스티커(잉크 테두리)를 입어 행동 가능함을 드러낸다. */
+    .copies {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+    }
+
+    .copy {
+      padding: 22px 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      border-radius: var(--r-card);
+    }
+
+    .copy.stick {
+      border-radius: var(--r-card)
+    }
+
+    .copy-top {
+      display: flex;
+      align-items: center;
+      gap: 14px
+    }
+
+    .qr {
+      flex: 0 0 auto;
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      border: 2px solid var(--stick-edge);
+      background: var(--card);
+      display: grid;
+      place-items: center;
+    }
+
+    .copy.out .qr {
+      border-color: var(--line-hard);
+      background: rgba(255, 255, 255, .06)
+    }
+
+    .copy-code {
+      font-family: var(--mono);
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: -.02em;
+      line-height: 1.1;
+    }
+
+    .copy-code small {
+      display: block;
+      font-family: var(--body);
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--ink-2);
+      letter-spacing: 0;
+      margin-top: 3px;
+    }
+
+    .copy-state {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-top: 15px;
+      border-top: 1.5px solid var(--line-soft);
+    }
+
+    .copy.out .copy-state {
+      border-top-color: var(--edge-dim)
+    }
+
+    .dial {
+      width: 36px;
+      height: 36px;
+      flex: 0 0 auto
+    }
+
+    .st {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -.02em
+    }
+
+    .st small {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 400;
+      color: var(--ink-2);
+      margin-top: 2px;
+    }
+
+    .st .due {
+      font-family: var(--mono)
+    }
+
+    .take {
+      flex: 0 0 auto;
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--brand);
+      color: var(--on-brand);
+      border: 1.5px solid var(--on-brand);
+      border-radius: 999px;
+      padding: 4px 12px;
+    }
+
+    /* ─── 운영진 ─────────────────────────────── */
+    .admin {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 16px 20px;
+      border-radius: var(--r-card);
+    }
+
+    .admin p {
+      font-size: 13px;
+      color: var(--ink-2);
+      margin-right: auto
+    }
+
+    .abtn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, .07);
+      border: 1.5px solid var(--line-hard);
+      transition: background .16s, transform .16s;
+    }
+
+    .abtn:hover {
+      background: rgba(255, 255, 255, .14);
+      transform: translateY(-2px)
+    }
+
+    /* ─── footer ─────────────────────────────── */
+    /* .sitefoot — .foot 류와 겹치지 않게 별도 이름 */
+    .sitefoot {
+      border-top: 1px solid var(--edge-dim);
+      padding: 30px 0 52px;
+    }
+
+    .sitefoot .wrap {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      font-size: 12.5px;
+      color: var(--ink-2);
+    }
+
+    .sitefoot .note {
+      margin-left: auto
+    }
+
+    /* ─── motion ─────────────────────────────── */
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(16px)
+      }
+
+      to {
+        opacity: 1;
+        transform: none
+      }
+    }
+
+    .hero-grid>.panel {
+      animation: rise .5s cubic-bezier(.2, .7, .3, 1) both
+    }
+
+    .hero-grid>.panel:nth-child(2) {
+      animation-delay: .08s
+    }
+
+    @media (prefers-reduced-motion:reduce) {
+
+      *,
+      *::before,
+      *::after {
+        animation: none !important;
+        transition: none !important
+      }
+
+      .btn:hover,
+      .back:hover,
+      .abtn:hover {
+        transform: none
+      }
+    }
+
+    /* ─── responsive ─────────────────────────── */
+    @media (max-width:940px) {
+      .hero-grid {
+        grid-template-columns: 1fr
+      }
+
+      .nav {
+        display: none
+      }
+    }
+
+    @media (max-width:700px) {
+      .copies {
+        grid-template-columns: 1fr
+      }
+    }
+
+    @media (max-width:600px) {
+      .wrap {
+        padding: 0 20px
+      }
+
+      .ident {
+        padding: 26px 22px 22px
+      }
+
+      .status {
+        padding: 24px 20px 20px
+      }
+
+      .specs {
+        grid-template-columns: repeat(2, 1fr)
+      }
+
+      .ident-top {
+        gap: 18px
+      }
+
+      .cover,
+      .cover-face {
+        width: 116px
+      }
+
+      .cover-face {
+        height: 162px
+      }
+
+      .cover-gen {
+        padding: 13px 12px 12px
+      }
+
+      .cover-gen .g-title {
+        font-size: 15px;
+        margin-top: 7px
+      }
+
+      .sitefoot .note {
+        margin-left: 0
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="sky" aria-hidden="true"></div>
+
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="main-prototype.html" aria-label="해달 도서 홈">
+        <img src="../../logos/haedal-logo-0.png" alt="해달">
+      </a>
+      <nav class="nav">
+        <a href="main-prototype.html">홈</a>
+        <a href="main-prototype.html#shelf" aria-current="page">도서 찾기</a>
+        <a href="main-prototype.html#mine">내 대여</a>
+        <a href="main-prototype.html#returns">서가 현황</a>
+      </nav>
+      <div class="who">김도현 <span class="role">운영진</span></div>
+    </div>
+  </header>
+
+  <div class="crumb">
+    <div class="wrap">
+      <a class="back" href="main-prototype.html#shelf">← 서가</a>
+      <span class="rb"><i class="dot"></i><b>동아리방 열림</b></span>
+      <span class="rb">오늘 <span class="mono">10:00 – 20:00</span></span>
+    </div>
+  </div>
+
+  <main>
+
+    <!-- ── hero ─────────────────────────────── -->
+    <section class="hero">
+      <div class="wrap">
+        <div class="hero-grid">
+
+          <div class="panel stick ident">
+            <div class="ident-top">
+
+              <figure class="cover">
+                <div class="cover-face">
+                  <!-- 생성 표지가 아래에 깔리고, 실제 파일이 있으면 그 위를 덮는다.
+                       파일이 없으면 img가 스스로 빠져 생성 표지가 드러난다. -->
+                  <!-- 분류는 옆 배지가 이미 말하므로 표지에 또 넣지 않는다 -->
+                  <div class="cover-gen" aria-hidden="true">
+                    <span class="g-title">리팩터링</span>
+                    <span class="g-by">마틴 파울러</span>
+                  </div>
+                  <img src="../../covers/9791162242742.jpg" alt="리팩터링 표지">
+                </div>
+                <figcaption class="cover-note" hidden>제목으로 만든 임시 표지입니다.</figcaption>
+              </figure>
+
+              <div class="ident-text">
+                <span class="cat">전공</span>
+                <h1>리팩터링</h1>
+                <p class="byline"><b>마틴 파울러</b> 지음</p>
+
+                <dl class="specs">
+              <div>
+                <dt>출판사</dt>
+                <dd>한빛미디어</dd>
+              </div>
+              <div>
+                <dt>출판연도</dt>
+                <dd class="mono">2020</dd>
+              </div>
+              <div>
+                <dt>ISBN</dt>
+                <dd class="mono">9791162242742</dd>
+              </div>
+              <!-- 보관 위치는 서지가 아니라 품목(실물) 속성이라 복본 쪽에만 둔다 -->
+                  <div>
+                    <dt>서가 등록</dt>
+                    <dd class="mono">2025-03-04</dd>
+                  </div>
+                </dl>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="panel stick status">
+            <p class="eyebrow">지금 상태</p>
+            <p class="answer">2권 가운데 <em>1권</em>을<br>지금 가져갈 수 있습니다</p>
+
+            <p class="where">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B6BED2" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z" />
+                <circle cx="12" cy="10" r="2.6" />
+              </svg>
+              <span><span class="code">A-019</span> · 2번 책꽂이 3단</span>
+            </p>
+
+            <!-- 표지가 들어오면서 왼쪽 카드가 길어졌다. 액션을 아래로 붙여
+                 두 카드가 같은 높이에서 균형을 잡게 한다. -->
+            <div class="status-act">
+              <button class="btn">대여하기</button>
+              <p class="btnnote">동아리방에서 라벨을 스캔하면 더 빠릅니다.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 복본 ─────────────────────────────── -->
+    <section class="band">
+      <div class="wrap">
+        <div class="band-head">
+          <h2>이 책의 복본</h2>
+          <span class="n">2권</span>
+          <p>같은 책이라도 권마다 따로 관리합니다. 라벨코드가 실물 한 권을 가리킵니다.</p>
+        </div>
+
+        <div class="copies">
+
+          <!-- 빌릴 수 있는 권 = 스티커. 잉크 테두리가 "집어갈 수 있다"는 신호 -->
+          <article class="copy stick">
+            <div class="copy-top">
+              <span class="qr" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D8D4C4" stroke-width="1.9"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="4" y="4" width="7" height="7" rx="1.5" />
+                  <rect x="13" y="4" width="7" height="7" rx="1.5" />
+                  <rect x="4" y="13" width="7" height="7" rx="1.5" />
+                  <path d="M13 13h3v3M20 20v-3M17 20h3" />
+                </svg>
+              </span>
+              <span class="copy-code">A-019<small>2번 책꽂이 3단</small></span>
+            </div>
+            <div class="copy-state">
+              <svg class="dial" viewBox="0 0 40 40" role="img" aria-label="대여 가능">
+                <circle cx="20" cy="20" r="15" fill="#FFE500" />
+                <circle cx="20" cy="20" r="15" fill="none" stroke="#D8D4C4" stroke-width="2.4" />
+              </svg>
+              <span class="st">책꽂이에 있습니다<small>지금 가져가시면 됩니다</small></span>
+              <span class="take">대여 가능</span>
+            </div>
+          </article>
+
+          <!-- 대여 중인 권 = 글래스. 지금은 행동할 수 없는 표면 -->
+          <article class="copy glass out">
+            <div class="copy-top">
+              <span class="qr" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8892A8" stroke-width="1.9"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="4" y="4" width="7" height="7" rx="1.5" />
+                  <rect x="13" y="4" width="7" height="7" rx="1.5" />
+                  <rect x="4" y="13" width="7" height="7" rx="1.5" />
+                  <path d="M13 13h3v3M20 20v-3M17 20h3" />
+                </svg>
+              </span>
+              <span class="copy-code">A-020<small>2번 책꽂이 3단</small></span>
+            </div>
+            <div class="copy-state">
+              <!-- D-6 · 남은 6/14일 -->
+              <svg class="dial" viewBox="0 0 40 40" role="img" aria-label="반납까지 6일">
+                <circle cx="20" cy="20" r="15" fill="#FFE500" />
+                <path d="M20 5 A15 15 0 0 1 20 35 Z" fill="#3A4463" />
+                <ellipse cx="20" cy="20" rx="2.14" ry="15" fill="#3A4463" />
+                <circle cx="20" cy="20" r="15" fill="none" stroke="#D8D4C4" stroke-width="2.4" />
+              </svg>
+              <span class="st">누군가 빌려 갔습니다<small><span class="due">08-18</span> 돌아올 예정 · D-6</small></span>
+            </div>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 운영진 ───────────────────────────── -->
+    <section class="band">
+      <div class="wrap">
+        <div class="admin glass">
+          <span class="tag-admin">운영진</span>
+          <p>이 책의 정보를 고치거나 라벨을 다시 뽑을 수 있습니다.</p>
+          <a class="abtn" href="#">도서 정보 수정</a>
+          <a class="abtn" href="#">라벨 다시 발급</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="sitefoot">
+    <div class="wrap">
+      <span>해달 도서 관리 시스템</span>
+      <span class="note mono">프로토타입 · 2026-08</span>
+    </div>
+  </footer>
+
+  <script>
+    // 표지 파일이 없으면 img를 걷어내 생성 표지를 드러내고, 그때만 설명을 붙인다.
+    document.querySelectorAll('.cover-face img').forEach(function (img) {
+      function reveal() {
+        var cover = img.closest('.cover');
+        img.remove();
+        var note = cover && cover.querySelector('.cover-note');
+        if (note) note.hidden = false;
+      }
+      img.addEventListener('error', reveal);
+      // 스크립트가 붙기 전에 이미 실패했다면 error 가 오지 않는다
+      if (img.complete && img.naturalWidth === 0) reveal();
+    });
+  </script>
+
+</body>
+
+</html>
